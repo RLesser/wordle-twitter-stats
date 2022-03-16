@@ -53,44 +53,12 @@ class PosterCounter:
             return self.poster_count
 
 
-#
-def get_specific_day_from_all_file(wordle_num):
-    first_time = True
-    for df in pd.read_csv("data/all_wordle.csv", chunksize=100000, dtype={12: str}):
-        # print("filtered:", df[df["wordle_num"] == wordle_num])
-        print(
-            len(df),
-            len(df[df["wordle_num"] == wordle_num]),
-            len(df[df["wordle_num"] > wordle_num]),
-        )
-        # if df.loc[0]["wordle_num"] > wordle_num:
-        if len(df[df["wordle_num"] == wordle_num]) > 0:
-            print("saving...")
-            if first_time:
-                df[df["wordle_num"] == wordle_num].to_csv(
-                    "data/wordle." + str(wordle_num) + ".from_all_file.csv",
-                    index=False,
-                    mode="w",
-                )
-                first_time = False
-            else:
-                df[df["wordle_num"] == wordle_num].to_csv(
-                    "data/wordle." + str(wordle_num) + ".from_all_file.csv",
-                    mode="a",
-                    header=False,
-                    index=False,
-                )
-        # if we are passed the target num, break
-        if len(df[df["wordle_num"] > wordle_num]) == len(df):
-            break
-
-
-# Opens all_wordle.csv, containing every wordle tweet in full form,
-# and condenses it into all_wordle_condensed.csv
+# Opens data/all_wordle.csv, containing every wordle tweet in full form,
+# and condenses it into data/condensed/all_wordle.csv
 def condense_file():
     i = 0
     PC = PosterCounter()
-    with open("data/all_wordle_condensed.csv", "w") as f:
+    with open("data/condensed/all_wordle.csv", "w") as f:
         f.write("")
     for df in pd.read_csv("data/all_wordle.csv", chunksize=100000, dtype={12: str}):
         print(i)
@@ -136,10 +104,13 @@ def condense_file():
         df.drop("tweet_id", axis=1, inplace=True)
         print(i)
         if i == 0:
-            df.to_csv("data/all_wordle_condensed.csv", index=False, mode="w")
+            df.to_csv("data/condensed/all_wordle.csv", index=False, mode="w")
         else:
             df.to_csv(
-                "data/all_wordle_condensed.csv", mode="a", header=False, index=False
+                "data/condensed/all_wordle.csv",
+                mode="a",
+                header=False,
+                index=False,
             )
         i += 1
     print(i)
@@ -183,7 +154,7 @@ def get_filenames_for_wordle_num(wordle_num):
 
 
 def get_filenames_for_all_wordles():
-    return sorted(glob.glob("data/*wordle.*.csv"))
+    return sorted(glob.glob("data/wordle.*.csv"))
 
 
 def compile_files(wordle_num=None):
@@ -194,18 +165,69 @@ def compile_files(wordle_num=None):
     create_combined_file(files, wordle_num)
 
 
+# splits the condensed file into individual wordle number files
+def split_condensed_file():
+    first_time = True
+    chunk_num = 0
+    wordle_num = None
+    continuation = False
+    for df in pd.read_csv(
+        "data/condensed/all_wordle.csv", chunksize=100000, dtype={12: str}
+    ):
+        print("getting chunk", chunk_num)
+        if wordle_num == None:
+            wordle_num = df.loc[0]["wordle_num"]
+        while True:
+            tweets_for_num = df[df["wordle_num"] == wordle_num]
+            tweets_for_next_num = df[df["wordle_num"] == wordle_num + 1]
+            # if there are tweets for the current num, save them
+            if len(tweets_for_num) > 0:
+                # if it is a continuation from the last chunk,
+                # append to the existing file
+                if continuation:
+                    print(
+                        "continuing to save wordle",
+                        wordle_num,
+                        "-",
+                        str(len(tweets_for_num)),
+                        "tweets",
+                    )
+                    tweets_for_num.to_csv(
+                        "data/condensed/wordle." + str(wordle_num) + ".csv",
+                        mode="a",
+                        header=False,
+                        index=False,
+                    )
+                    continuation = False
+                else:
+                    print(
+                        "saving wordle",
+                        wordle_num,
+                        "-",
+                        str(len(tweets_for_num)),
+                        "tweets",
+                    )
+                    tweets_for_num.to_csv(
+                        "data/condensed/wordle." + str(wordle_num) + ".csv",
+                        index=False,
+                        mode="w",
+                    )
+            # if there are no tweets for the next number,
+            # set continuation to true, and break to get next chunk
+            if len(tweets_for_next_num) == 0:
+                continuation = True
+                break
+
+            # if there are tweets for the next number,
+            # incriment the wordle_num
+            wordle_num += 1
+        chunk_num += 1
+
+
 def main():
-    # files = sorted([fn for fn in os.listdir("data") if fn.startswith("wordle.")])
-    # create_combined_file(files)
-    # print(get_filenames_for_all_wordles())
-    # [print(x) for x in get_filenames_for_all_wordles()]
-    # [compile_files(x) for x in range(180, 204)]
-    # compile_files()
-    # get_specific_day_from_all_file(212)
-    # make_hourly_summary_file()
-    # get_surfaces()
+    compile_files()
     condense_file()
-    # compare()
+    split_condensed_file()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,44 @@
+name: Run the twitter API script for the days wordle tweets
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * *'  
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: checkout wordle-twitter-stats repo
+        uses: actions/checkout@v2
+
+      - name: Retrieve secret
+        env:
+          BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
+
+      - name: Get file structure
+        run: find . -type d | sed -e "s/[^-][^\/]*\//  |/g" -e "s/|\([^ ]\)/|-\1/"
+
+      - name: Setup Python
+        uses: actions/setup-python@v3.0.0
+
+      - uses: actions/cache@v2
+        name: Configure pip caching
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          /python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Tweet API python file
+        run: python3 WordleTwitterAPIScrape.py 279 github

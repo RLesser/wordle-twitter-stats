@@ -3,7 +3,10 @@ name: Run the twitter API script for the days wordle tweets
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 1 * * *'  
+    - cron: '0 1 * * *'
+
+env:
+  BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -16,10 +19,6 @@ jobs:
     steps:
       - name: checkout wordle-twitter-stats repo
         uses: actions/checkout@v2
-
-      - name: Retrieve secret
-        env:
-          BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
 
       - name: Get file structure
         run: find . -type d | sed -e "s/[^-][^\/]*\//  |/g" -e "s/|\([^ ]\)/|-\1/"

@@ -21,8 +21,18 @@ LIMIT = 450
 # Data will be saved every 50 api calls
 SAVE_INTERVAL = 50
 
+# set environment
+ENV = "PC"
+if len(sys.argv) > 2 and sys.argv[2] == "github":
+    ENV = "GITHUB"
+
 # creates a native mac notification to alert the user to the progress of the program
 def notify(title, text):
+    if ENV == "GITHUB":
+        print(title)
+        print(text)
+        return
+
     CMD = """
     on run argv
     display notification (item 2 of argv) with title (item 1 of argv)
@@ -38,7 +48,7 @@ def notify(title, text):
 # sets the data file path based on the environment set from CLI args
 # when using on github actions (as opposed to locally), "github" flag should be specified
 def get_data_file_path(wordle_num):
-    if len(sys.argv) > 2 and sys.argv[2] == "github":
+    if ENV == "GITHUB":
         return "./wordle." + str(wordle_num) + ".api.csv"
     else:
         return "data/wordle." + str(wordle_num) + ".api.csv"

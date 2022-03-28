@@ -34,6 +34,16 @@ def notify(title, text):
 # Optional params: start_time,end_time,since_id,until_id,max_results,next_token,
 # expansions,tweet.fields,media.fields,poll.fields,place.fields,user.fields
 
+
+# sets the data file path based on the environment set from CLI args
+# when using on github actions (as opposed to locally), "github" flag should be specified
+def get_data_file_path(wordle_num):
+    if len(sys.argv) > 2 and sys.argv[2] == "github":
+        return "./wordle." + str(wordle_num) + ".api.csv"
+    else:
+        return "data/wordle." + str(wordle_num) + ".api.csv"
+
+
 # checks whether it is too early to scrape the given wordle number's tweets
 def is_too_early(wordle_num):
     start = WORDLE_DAY_ONE
@@ -199,7 +209,7 @@ def save_tweets(clean_tweets, wordle_num, mode):
     if len(clean_tweets) == 0:
         return 0
     print("Saving", len(clean_tweets), "tweets...")
-    with open("data/wordle." + str(wordle_num) + ".api.csv", mode) as csvfile:
+    with open(get_data_file_path(wordle_num), mode) as csvfile:
         writer = csv.DictWriter(csvfile, clean_tweets[0].keys())
         if mode == "w":
             writer.writeheader()
@@ -210,7 +220,7 @@ def save_tweets(clean_tweets, wordle_num, mode):
 # get the last saved id, to determine where to start the scraping
 def get_last_saved_id(wordle_num):
     try:
-        with open("data/wordle." + str(wordle_num) + ".api.csv", "r") as f:
+        with open(get_data_file_path(wordle_num), "r") as f:
             for line in f:
                 pass
             return int(line.split(",")[1])

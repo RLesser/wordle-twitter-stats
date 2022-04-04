@@ -167,7 +167,6 @@ def compile_files(wordle_num=None):
 
 # splits the condensed file into individual wordle number files
 def split_condensed_file():
-    first_time = True
     chunk_num = 0
     wordle_num = None
     continuation = False

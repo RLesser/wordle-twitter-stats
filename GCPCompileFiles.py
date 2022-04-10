@@ -4,10 +4,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from google.cloud import storage
-
-
-def log(string):
-    print("[printlog]", string)
+from google.cloud import bigquery
 
 
 def get_wordle_num_from_filename(filename):
@@ -78,7 +75,7 @@ def get_surface_id(surface_string):
 
 
 def get_timestamp(time_string):
-    return int(datetime.strptime(time_string, "%a %b %d %H:%M:%S +0000 %Y").timestamp())
+    return datetime.strptime(time_string, "%a %b %d %H:%M:%S +0000 %Y")
 
 
 def contains_interior_win(matrix):
@@ -137,12 +134,51 @@ def condense_day_file(bucket, filename):
     # drop tweet ids
     df.drop("tweet_id", axis=1, inplace=True)
 
-    # write data to new blob in condensed_days folder
-    df.to_csv(f"gs://{bucket}/{condensed_filename}", index=False, mode="w")
+    # # write data to new blob in condensed_days folder
+    # df.to_csv(f"gs://{bucket}/{condensed_filename}", index=False, mode="w")
 
-    print(f"condensed {len(df)} rows into {condensed_filename}!")
+    # print(f"condensed {len(df)} rows into {condensed_filename}!")
 
     UC.save_data()
+
+    # write condensed data to bigquery
+    loadToBigQuery(df)
+
+
+def loadToBigQuery(dataframe):
+    client = bigquery.Client()
+    project_id = os.environ.get("GCP_PROJECT")
+    table_id = f"{project_id}.main.condensed_data"
+    job_config = bigquery.LoadJobConfig(
+        schema=[
+            bigquery.SchemaField("time", "TIMESTAMP"),
+            bigquery.SchemaField("user_id", "INTEGER"),
+            bigquery.SchemaField("surface", "INTEGER"),
+            bigquery.SchemaField("is_reply", "BOOLEAN"),
+            bigquery.SchemaField("is_quote", "BOOLEAN"),
+            bigquery.SchemaField("retweets", "INTEGER"),
+            bigquery.SchemaField("quotes", "INTEGER"),
+            bigquery.SchemaField("favs", "INTEGER"),
+            bigquery.SchemaField("replies", "INTEGER"),
+            bigquery.SchemaField("language", "STRING"),
+            bigquery.SchemaField("wordle_num", "INTEGER"),
+            bigquery.SchemaField("rounds", "STRING"),
+            bigquery.SchemaField("hard", "BOOLEAN"),
+            bigquery.SchemaField("theme", "STRING"),
+            bigquery.SchemaField("colorblind", "BOOLEAN"),
+            bigquery.SchemaField("win", "BOOLEAN"),
+            bigquery.SchemaField("matrix", "STRING"),
+        ],
+        write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
+        create_disposition=bigquery.CreateDisposition.CREATE_IF_NEEDED,
+        range_partitioning=bigquery.RangePartitioning(
+            field="wordle_num",
+            range_=bigquery.PartitionRange(start=1, end=4000, interval=1),
+        ),
+    )
+    job = client.load_table_from_dataframe(dataframe, table_id, job_config=job_config)
+    result = job.result()
+    print(result)
 
 
 def main(event, context):
@@ -161,7 +197,7 @@ def main(event, context):
 
     print(f"triggered by {filename}, beginning process.")
 
-    log(json.dumps(event))
-    log(json.dumps(context.__dict__))
+    print(json.dumps(event))
+    print(json.dumps(context.__dict__))
 
     condense_day_file(bucket, filename)

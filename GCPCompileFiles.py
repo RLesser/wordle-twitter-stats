@@ -141,11 +141,11 @@ def condense_day_file(bucket, filename):
 
     UC.save_data()
 
-    # write condensed data to bigquery
-    loadToBigQuery(df)
+    return df
 
 
-def loadToBigQuery(dataframe):
+def loadToBQMainTable(dataframe):
+    print("loading to condensed data table...")
     client = bigquery.Client()
     project_id = os.environ.get("GCP_PROJECT")
     table_id = f"{project_id}.main.condensed_data"
@@ -177,8 +177,29 @@ def loadToBigQuery(dataframe):
         ),
     )
     job = client.load_table_from_dataframe(dataframe, table_id, job_config=job_config)
-    result = job.result()
-    print(result)
+    print(job.result())
+
+
+def appendToBQWordleRoundsAggTable(wordle_num):
+    print()
+    client = bigquery.Client()
+    project_id = os.environ.get("GCP_PROJECT")
+    query = f"""
+        INSERT INTO {project_id}.main.wordle_rounds_count
+        SELECT
+            wordle_num,
+            rounds,
+            COUNT(1)
+        FROM
+            {project_id}.main.condensed_data
+        WHERE
+            wordle_num = {wordle_num}
+        GROUP BY
+            1,
+            2
+    """
+    job = client.query(query)
+    print(job.result())
 
 
 def main(event, context):
@@ -200,4 +221,10 @@ def main(event, context):
     print(json.dumps(event))
     print(json.dumps(context.__dict__))
 
-    condense_day_file(bucket, filename)
+    # condense day data as a dataframe
+    df = condense_day_file(bucket, filename)
+    # write condensed data to bigquery main table
+    loadToBQMainTable(df)
+    # append to wordle rounds aggregate table
+    wordle_num = get_wordle_num_from_filename(filename)
+    appendToBQWordleRoundsAggTable(wordle_num)

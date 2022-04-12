@@ -1,3 +1,11 @@
-requests
+# used by all
 pandas
 numpy
+# used by scraping function
+requests
+# used by compile function
+fsspec
+gcsfs
+google-cloud-bigquery
+# used by download function
+pandas-gbq

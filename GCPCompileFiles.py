@@ -144,7 +144,7 @@ def condense_day_file(bucket, filename):
     return df
 
 
-def loadToBQMainTable(dataframe):
+def load_to_bq_condensed_table(dataframe):
     print("loading to condensed data table...")
     client = bigquery.Client()
     project_id = os.environ.get("GCP_PROJECT")
@@ -180,8 +180,8 @@ def loadToBQMainTable(dataframe):
     print(job.result())
 
 
-def appendToBQWordleRoundsAggTable(wordle_num):
-    print()
+def append_to_bq_wordle_rounds_table(wordle_num):
+    print("Appending to Wordle rounds agg table...")
     client = bigquery.Client()
     project_id = os.environ.get("GCP_PROJECT")
     query = f"""
@@ -200,6 +200,19 @@ def appendToBQWordleRoundsAggTable(wordle_num):
     """
     job = client.query(query)
     print(job.result())
+
+
+# def moveViewTablesToStorage(bucket):
+#     print("Moving views to bucket...")
+#     client = bigquery.Client()
+#     project_id = os.environ.get("GCP_PROJECT")
+#     get_destination_file = lambda name: f"gs://{bucket}/views/{name}"
+#     dataset_ref = bigquery.DatasetReference(project_id, "main")
+#     extract_job = client.extract_table(
+#         dataset_ref.table("wordle_rounds_count"),
+#         get_destination_file("wordle_round_count.csv"),
+#     )
+#     print(extract_job.result())
 
 
 def main(event, context):
@@ -224,7 +237,9 @@ def main(event, context):
     # condense day data as a dataframe
     df = condense_day_file(bucket, filename)
     # write condensed data to bigquery main table
-    loadToBQMainTable(df)
+    load_to_bq_condensed_table(df)
     # append to wordle rounds aggregate table
     wordle_num = get_wordle_num_from_filename(filename)
-    appendToBQWordleRoundsAggTable(wordle_num)
+    append_to_bq_wordle_rounds_table(wordle_num)
+    # # extract views to GCS
+    # moveViewTablesToStorage(bucket)

@@ -11,7 +11,7 @@ def get_wordle_rounds_count_data():
 
     df = pandas_gbq.read_gbq(query, project_id=project_id)
 
-    Path("/data_views").mkdir(exist_ok=True)
+    Path("data_views/").mkdir(exist_ok=True)
 
     df.to_csv("data_views/wordle_rounds_count.csv", index=False)
 

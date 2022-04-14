@@ -5,6 +5,8 @@ import numpy as np
 from datetime import datetime
 from google.cloud import storage
 from google.cloud import bigquery
+from requests import request
+import requests
 
 
 def get_wordle_num_from_filename(filename):
@@ -202,17 +204,19 @@ def append_to_bq_wordle_rounds_table(wordle_num):
     print(job.result())
 
 
-# def moveViewTablesToStorage(bucket):
-#     print("Moving views to bucket...")
-#     client = bigquery.Client()
-#     project_id = os.environ.get("GCP_PROJECT")
-#     get_destination_file = lambda name: f"gs://{bucket}/views/{name}"
-#     dataset_ref = bigquery.DatasetReference(project_id, "main")
-#     extract_job = client.extract_table(
-#         dataset_ref.table("wordle_rounds_count"),
-#         get_destination_file("wordle_round_count.csv"),
-#     )
-#     print(extract_job.result())
+def trigger_github_download_workflow(wordle_num):
+    print("Triggering github download workflow...")
+    pat = os.environ.get("GITHUB_PAT")
+    res = requests.post(
+        "https://api.github.com/repos/RLesser/wordle-twitter-stats/dispatches",
+        headers={
+            "Authorization": f"token {pat}",
+            "Accept": "application/vnd.github.v3+json",
+            "Content-Type": "application/json",
+        },
+        json={"event_type": "download", "client_payload": {"wordle_num": wordle_num}},
+    )
+    print(res.status_code, res.reason, res.__dict__)
 
 
 def main(event, context):
@@ -241,5 +245,5 @@ def main(event, context):
     # append to wordle rounds aggregate table
     wordle_num = get_wordle_num_from_filename(filename)
     append_to_bq_wordle_rounds_table(wordle_num)
-    # # extract views to GCS
-    # moveViewTablesToStorage(bucket)
+    # trigger github download workflow
+    trigger_github_download_workflow(wordle_num)

@@ -22,30 +22,32 @@ class UserCounter:
         blob = self.bucket.get_blob("metadata/user_id_map.csv")
         if not blob:
             print("UC - creating new file")
-            self.df = pd.DataFrame({"user_id": [], "user_index": []})
+            self.user_dict = {}
         else:
             print("UC - getting from existing file")
-            self.df = pd.read_csv(f"gs://{bucket_name}/metadata/user_id_map.csv")
-        self.df.set_index("user_id", inplace=True)
-        print(f"UC - {len(self.df)} rows loaded")
-        print("index", self.df.index)
+            df = pd.read_csv(f"gs://{bucket_name}/metadata/user_id_map.csv")
+            df.set_index("user_id", inplace=True)
+            self.user_dict = df.to_dict()["user_index"]
+        print(f"UC - {len(self.user_dict)} rows loaded")
 
     def get_index(self, user_id):
         self.call_count += 1
         if self.call_count % 1000 == 0:
-            print(f"call {self.call_count} | list length {len(self.df) + 1}")
-        if user_id not in self.df.index:
-            count = len(self.df)
+            print(f"call {self.call_count} | list length {len(self.user_dict) + 1}")
+        if user_id not in self.user_dict:
+            count = len(self.user_dict)
             new_index = count + 1
-            self.df.loc[user_id] = [new_index]
+            self.user_dict[user_id] = new_index
             return new_index
 
-        return self.df.loc[user_id]["user_index"]
+        return self.user_dict[user_id]
 
     def save_data(self):
         bucket_name = self.bucket.name
-        self.df.to_csv(f"gs://{bucket_name}/metadata/user_id_map.csv", mode="w")
-        print(f"UC - {len(self.df)} rows saved")
+        df = pd.DataFrame({"user_index": self.user_dict})
+        df.index.name = "user_id"
+        df.to_csv(f"gs://{bucket_name}/metadata/user_id_map.csv", mode="w")
+        print(f"UC - {len(self.user_dict)} rows saved")
 
 
 def get_surface_id(surface_string):

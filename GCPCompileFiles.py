@@ -15,19 +15,10 @@ def get_wordle_num_from_filename(filename):
     return filename.split("/")[1].split(".")[1]
 
 
-def get_wordle_day_blobs(bucket):
-    storage_client = storage.Client()
-    blobs = storage_client.list_blobs(bucket, prefix="day_files/", delimiter="/")
-
-    for blob in blobs:
-        print(blob.name)
-
-    return [b for b in blobs if b.endswith(".csv")]
-
-
 class UserCounter:
     def __init__(self, bucket_name):
         self.bucket = storage.Client().get_bucket(bucket_name)
+        self.call_count = 0
         blob = self.bucket.get_blob("metadata/user_id_map.csv")
         if not blob:
             print("UC - creating new file")
@@ -40,12 +31,9 @@ class UserCounter:
         print("index", self.df.index)
 
     def get_index(self, user_id):
-        if len(self.df) > 50 and len(self.df) < 55:
-            print(f"user id: {user_id} | next index: {len(self.df) + 1}")
-            print("df:", self.df)
-            print("df index:", self.df.index)
-            print("user in index:", user_id in self.df.index)
-            print("user in index values", user_id in self.df.index.values)
+        self.call_count += 1
+        if self.call_count % 1000 == 0:
+            print(f"call {self.call_count} | list length {len(self.df) + 1}")
         if user_id not in self.df.index:
             count = len(self.df)
             new_index = count + 1
@@ -183,7 +171,7 @@ def load_to_bq_condensed_table(dataframe):
 
 
 def append_to_bq_wordle_rounds_table(wordle_num):
-    print("Appending to Wordle rounds agg table...")
+    print(f"Appending {wordle_num} to Wordle rounds agg table...")
     client = bigquery.Client()
     project_id = os.environ.get("GCP_PROJECT")
     query = f"""

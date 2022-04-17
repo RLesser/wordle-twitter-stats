@@ -136,10 +136,22 @@ def condense_day_file(bucket, filename):
     return df
 
 
-def load_to_bq_condensed_table(dataframe):
-    print("loading to condensed data table...")
+def load_to_bq_condensed_table(dataframe, wordle_num):
     client = bigquery.Client()
     project_id = os.environ.get("GCP_PROJECT")
+
+    print(f"Deleting existing {wordle_num} rows in condensed data table...")
+    query = f"""
+        DELETE 
+        FROM 
+            {project_id}.main.condensed_data
+        WHERE
+            wordle_num = {wordle_num}
+    """
+    job = client.query(query)
+    print(job.result())
+
+    print("loading to condensed data table...")
     table_id = f"{project_id}.main.condensed_data"
     job_config = bigquery.LoadJobConfig(
         schema=[
@@ -173,9 +185,20 @@ def load_to_bq_condensed_table(dataframe):
 
 
 def append_to_bq_wordle_rounds_table(wordle_num):
-    print(f"Appending {wordle_num} to Wordle rounds agg table...")
+    print(f"Deleting existing {wordle_num} rows in Wordle rounds agg table...")
     client = bigquery.Client()
     project_id = os.environ.get("GCP_PROJECT")
+    query = f"""
+        DELETE 
+        FROM 
+            {project_id}.main.wordle_rounds_count
+        WHERE
+            wordle_num = {wordle_num}
+    """
+    job = client.query(query)
+    print(job.result())
+
+    print(f"Appending {wordle_num} to Wordle rounds agg table...")
     query = f"""
         INSERT INTO {project_id}.main.wordle_rounds_count
         SELECT
@@ -227,13 +250,13 @@ def main(event, context):
 
     print(json.dumps(event))
     print(json.dumps(context.__dict__))
+    wordle_num = get_wordle_num_from_filename(filename)
 
     # condense day data as a dataframe
     df = condense_day_file(bucket, filename)
     # write condensed data to bigquery main table
-    load_to_bq_condensed_table(df)
+    load_to_bq_condensed_table(df, wordle_num)
     # append to wordle rounds aggregate table
-    wordle_num = get_wordle_num_from_filename(filename)
     append_to_bq_wordle_rounds_table(wordle_num)
     # trigger github download workflow
     trigger_github_download_workflow(wordle_num)

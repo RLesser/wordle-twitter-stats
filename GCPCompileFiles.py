@@ -18,7 +18,6 @@ def get_wordle_num_from_filename(filename):
 class UserCounter:
     def __init__(self, bucket_name):
         self.bucket = storage.Client().get_bucket(bucket_name)
-        self.call_count = 0
         blob = self.bucket.get_blob("metadata/user_id_map.csv")
         if not blob:
             print("UC - creating new file")
@@ -31,9 +30,6 @@ class UserCounter:
         print(f"UC - {len(self.user_dict)} rows loaded")
 
     def get_index(self, user_id):
-        self.call_count += 1
-        if self.call_count % 1000 == 0:
-            print(f"call {self.call_count} | list length {len(self.user_dict) + 1}")
         if user_id not in self.user_dict:
             count = len(self.user_dict)
             new_index = count + 1

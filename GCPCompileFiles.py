@@ -7,12 +7,22 @@ from google.cloud import storage
 from google.cloud import bigquery
 from requests import request
 import requests
+import psutil
 
 
 def get_wordle_num_from_filename(filename):
     # filename in the form of folder/wordle.NUM.api.csv
     # or folder/wordle.NUM.csv
     return filename.split("/")[1].split(".")[1]
+
+
+def convert_bytes(size):
+    for x in ["bytes", "KB", "MB", "GB", "TB"]:
+        if size < 1024.0:
+            return "%3.1f %s" % (size, x)
+        size /= 1024.0
+
+    return size
 
 
 class UserCounter:
@@ -258,3 +268,6 @@ def main(event, context):
     append_to_bq_wordle_rounds_table(wordle_num)
     # trigger github download workflow
     trigger_github_download_workflow(wordle_num)
+
+    process = psutil.Process(os.getpid())
+    print("mem", convert_bytes(process.memory_info().rss))

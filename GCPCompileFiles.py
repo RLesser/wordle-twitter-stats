@@ -17,16 +17,18 @@ def get_wordle_num_from_filename(filename):
 
 class UserCounter:
     def __init__(self, bucket_name):
-        self.bucket = storage.Client().get_bucket(bucket_name)
-        blob = self.bucket.get_blob("metadata/user_id_map.csv")
-        if not blob:
+        bucket = storage.Client().get_bucket(bucket_name)
+        self.blob = bucket.get_blob("metadata/user_id_map.csv")
+        self.user_dict = {}
+        if not self.blob:
             print("UC - creating new file")
-            self.user_dict = {}
         else:
             print("UC - getting from existing file")
-            df = pd.read_csv(f"gs://{bucket_name}/metadata/user_id_map.csv")
-            df.set_index("user_id", inplace=True)
-            self.user_dict = df.to_dict()["user_index"]
+            with self.blob.open("r") as f:
+                next(f)  # skip header row
+                for line in f:
+                    row = line.split(",")
+                    self.user_dict[row[0]] = row[1]
         print(f"UC - {len(self.user_dict)} rows loaded")
 
     def get_index(self, user_id):
@@ -39,10 +41,10 @@ class UserCounter:
         return self.user_dict[user_id]
 
     def save_data(self):
-        bucket_name = self.bucket.name
-        df = pd.DataFrame({"user_index": self.user_dict})
-        df.index.name = "user_id"
-        df.to_csv(f"gs://{bucket_name}/metadata/user_id_map.csv", mode="w")
+        with self.blob.open("w") as f:
+            f.write("user_id,user_index\n")
+            for key, value in self.user_dict.items():
+                f.write(str(key) + "," + str(value))
         print(f"UC - {len(self.user_dict)} rows saved")
 
 

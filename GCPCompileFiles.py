@@ -38,7 +38,7 @@ class UserCounter:
                 next(f)  # skip header row
                 for line in f:
                     row = line.split(",")
-                    self.user_dict[row[0]] = row[1]
+                    self.user_dict[row[0]] = row[1][:-1]  # remove trailing \n
         print(f"UC - {len(self.user_dict)} rows loaded")
 
     def get_index(self, user_id):
@@ -48,13 +48,13 @@ class UserCounter:
             self.user_dict[user_id] = new_index
             return new_index
 
-        return self.user_dict[user_id]
+        return int(self.user_dict[user_id])
 
     def save_data(self):
         with self.blob.open("w") as f:
             f.write("user_id,user_index\n")
             for key, value in self.user_dict.items():
-                f.write(str(key) + "," + str(value))
+                f.write(str(key) + "," + str(value) + "\n")
         print(f"UC - {len(self.user_dict)} rows saved")
 
 
@@ -89,12 +89,8 @@ def contains_interior_win(matrix):
 # condenses individual day file
 def condense_day_file(bucket, filename):
     print(f"condensing {filename}...")
-    # get condensed filename
-    condensed_filename = (
-        f"condensed_days/wordle.{get_wordle_num_from_filename(filename)}.csv"
-    )
 
-    df = pd.read_csv(f"gs://{bucket}/{filename}", dtype={12: str})
+    df = pd.read_csv(f"gs://{bucket}/{filename}", dtype={2: str, 12: str})
 
     UC = UserCounter(bucket)
 

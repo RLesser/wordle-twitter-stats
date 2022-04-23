@@ -35,7 +35,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run download python file
-        run: python3 GHQueryForViewData.py
+        run: python3 scripts/GHQueryForViewData.py
 
       - name: Commit new files
         run: |

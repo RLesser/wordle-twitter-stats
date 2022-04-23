@@ -3,7 +3,7 @@ name: Run the twitter API script for the days wordle tweets
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 1 * * *'
+    - cron: "0 1 * * *"
 
 env:
   BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
@@ -40,4 +40,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tweet API python file
-        run: python3 WordleTwitterAPIScrape.py 279 github
+        run: python3 scripts/WordleTwitterAPIScrape.py 279 github

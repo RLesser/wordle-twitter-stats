@@ -40,4 +40,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tweet API python file
-        run: python3 scripts/WordleTwitterAPIScrape.py 279 github
+        run: python3 scripts/WordleTwitterAPIScrape.py latest github

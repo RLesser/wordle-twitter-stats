@@ -41,3 +41,10 @@ jobs:
 
       - name: Run Tweet API python file
         run: python3 scripts/WordleTwitterAPIScrape.py latest github
+
+      - name: "Upload Artifact"
+        uses: actions/upload-artifact@v3
+        with:
+          name: data-file
+          path: wordle**.csv
+          retention-days: 5

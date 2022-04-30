@@ -62,6 +62,14 @@ def is_too_early(wordle_num):
     return wordle_end > now
 
 
+def wordle_num_from_current_datetime():
+    now: datetime = datetime.utcnow()
+    start = WORDLE_DAY_ONE
+    latest_num = (now - start).days - 3
+    print(f"using latest wordle, which is {latest_num}")
+    return latest_num
+
+
 # generates the twitter API search params for the given wordle number and max id, if applicable
 def get_search_params(wordle_num, max_id=None):
     start = WORDLE_DAY_ONE
@@ -309,7 +317,11 @@ def get_all_response_sets(wordle_num):
 
 # main function, gets wordle num as first CLI arg
 def main():
-    wordle_num = int(sys.argv[1])
+    wordle_arg = sys.argv[1]
+    if wordle_arg == "latest":
+        wordle_num = wordle_num_from_current_datetime()
+    else:
+        wordle_num = int(wordle_arg)
     get_all_response_sets(wordle_num)
 
 

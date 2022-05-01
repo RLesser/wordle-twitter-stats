@@ -3,7 +3,7 @@ name: Run the twitter API script for the days wordle tweets
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 1 * * *"
+    - cron: "35 1 * * *"
 
 env:
   BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}

@@ -46,3 +46,4 @@ jobs:
         with:
           path: "${{env.WORDLE_DATA_FILEPATH}}"
           destination: "wordle-twitter-data-main/day_files/"
+          gzip: false

@@ -315,6 +315,12 @@ def get_all_response_sets(wordle_num):
         is_done = get_full_response_set(wordle_num)
 
 
+def set_env_var_for_filename(wordle_num):
+    env_file = os.getenv("GITHUB_ENV")
+    with open(env_file, "a") as f:
+        f.write(f"WORDLE_DATA_FILEPATH={get_data_file_path(wordle_num)}")
+
+
 # main function, gets wordle num as first CLI arg
 def main():
     wordle_arg = sys.argv[1]
@@ -322,9 +328,9 @@ def main():
         wordle_num = wordle_num_from_current_datetime()
     else:
         wordle_num = int(wordle_arg)
-    get_all_response_sets(wordle_num)
+    # get_all_response_sets(wordle_num)
     if ENV == "GITHUB":
-        os.environ["WORDLE_DATA_FILEPATH"] = get_data_file_path(wordle_num)
+        set_env_var_for_filename(wordle_num)
 
 
 if __name__ == "__main__":

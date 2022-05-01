@@ -49,7 +49,7 @@ def notify(title, text):
 # when using on github actions (as opposed to locally), "github" flag should be specified
 def get_data_file_path(wordle_num):
     if ENV == "GITHUB":
-        return "./wordle." + str(wordle_num) + ".api.csv"
+        return "wordle." + str(wordle_num) + ".api.csv"
     else:
         return "data/wordle." + str(wordle_num) + ".api.csv"
 
@@ -323,6 +323,8 @@ def main():
     else:
         wordle_num = int(wordle_arg)
     get_all_response_sets(wordle_num)
+    if ENV == "GITHUB":
+        os.environ["WORDLE_DATA_FILEPATH"] = get_data_file_path(wordle_num)
 
 
 if __name__ == "__main__":

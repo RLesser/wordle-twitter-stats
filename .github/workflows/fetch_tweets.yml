@@ -8,20 +8,19 @@ on:
 env:
   BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: checkout wordle-twitter-stats repo
         uses: actions/checkout@v2
 
-      - name: Get file structure
-        run: find . -type d | sed -e "s/[^-][^\/]*\//  |/g" -e "s/|\([^ ]\)/|-\1/"
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v0.7.0
+        with:
+          credentials_json: ${{secrets.GCP_CREDENTIALS}}
+          export_environment_variables: true
 
       - name: Setup Python
         uses: actions/setup-python@v3.0.0
@@ -42,9 +41,8 @@ jobs:
       - name: Run Tweet API python file
         run: python3 scripts/WordleTwitterAPIScrape.py latest github
 
-      - name: "Upload Artifact"
-        uses: actions/upload-artifact@v3
+      - name: Upload data file to google cloud storage
+        uses: "google-github-actions/upload-cloud-storage@v0"
         with:
-          name: data-file
-          path: wordle**.csv
-          retention-days: 5
+          path: "${{env.WORDLE_DATA_FILEPATH}}"
+          destination: "wordle-twitter-data-main/day_files/${{env.WORDLE_DATA_FILEPATH}}"

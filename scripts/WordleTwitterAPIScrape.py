@@ -328,7 +328,7 @@ def main():
         wordle_num = wordle_num_from_current_datetime()
     else:
         wordle_num = int(wordle_arg)
-    # get_all_response_sets(wordle_num)
+    get_all_response_sets(wordle_num)
     if ENV == "GITHUB":
         set_env_var_for_filename(wordle_num)
 

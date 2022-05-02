@@ -1,7 +1,7 @@
 # Wordle Twitter Stats
  
 ## Overview
-This repository holds the data for the wordle twitter project, as well as the python code to automate the data collection and manipulation.
+This repository holds the summarized data for the wordle twitter project, as well as the python code to automate the data collection and manipulation.
 
 **This project is a follow-up to my Observable-based data exploration, [Wordle, 15 Million Tweets Later](https://observablehq.com/@rlesser/wordle-twitter-exploration)**.
 
@@ -13,7 +13,7 @@ Why do this? Fair question; three reasons:
 
 ## Data Pipeline
 The data pipeline currently is as follows:
-1. The \<TODO DATA SCRAPE\> workflow is run on a daily basis.
+1. The `fetch_tweets.yml` workflow is run on a daily basis.
     1. This workflow calls `WordleTwitterAPIScrape.py` which fetches the last day's full set of Wordle tweets.
     2. This data is compiled to a CSV and uploaded to Google Cloud Storage (GCS)
 2. The upload to GCS triggers a Cloud Function, which runs `GCPCompileFiles.py`
